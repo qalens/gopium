@@ -9,7 +9,7 @@ import (
 	"strings"
 	"testing"
 
-	"qalens.com/gopium/internal/testsupport"
+	"github.com/qalens/gopium/internal/testsupport"
 )
 
 func TestNewSessionRequestIncludesW3CAndLegacyPayloads(t *testing.T) {

@@ -1,6 +1,6 @@
 # gopium
 
-`gopium` is a Go Appium client for `qalens.com/gopium`.
+`gopium` is a Go Appium client for `github.com/qalens/gopium`.
 
 It is designed around modern Appium and WebDriver behavior:
 
@@ -19,7 +19,7 @@ The API intentionally follows Appium client conventions from the Java client, bu
 ## Install
 
 ```bash
-go get qalens.com/gopium
+go get github.com/qalens/gopium
 ```
 
 ## Quick Start
@@ -31,7 +31,7 @@ import (
 	"context"
 	"log"
 
-	"qalens.com/gopium"
+	"github.com/qalens/gopium"
 )
 
 func main() {
