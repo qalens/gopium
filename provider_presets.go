@@ -10,12 +10,30 @@ func NewBrowserStackProvider(username, accessKey string) *CloudProvider {
 }
 
 func NewSauceLabsProvider(username, accessKey string) *CloudProvider {
-	return NewCloudProvider("Sauce Labs", "https://ondemand.us-west-1.saucelabs.com/wd/hub", "sauce:options").
+	return NewSauceLabsProviderForRegion(username, accessKey, "")
+}
+
+func NewSauceLabsProviderForRegion(username, accessKey, region string) *CloudProvider {
+	return NewCloudProvider("Sauce Labs", sauceLabsServerURL(region), "sauce:options").
+		WithBasicAuth(username, accessKey).
 		SetVendorOptions(map[string]any{
 			"username":  username,
 			"accessKey": accessKey,
 		}).
 		SetCloudAppiumOptionsName("sauce")
+}
+
+func sauceLabsServerURL(region string) string {
+	switch normalizeProviderName(region) {
+	case "", "uswest", "uswest1", "us":
+		return "https://ondemand.us-west-1.saucelabs.com/wd/hub"
+	case "useast", "useast4":
+		return "https://ondemand.us-east-4.saucelabs.com/wd/hub"
+	case "eu", "eucentral", "eucentral1":
+		return "https://ondemand.eu-central-1.saucelabs.com/wd/hub"
+	default:
+		return "https://ondemand.us-west-1.saucelabs.com/wd/hub"
+	}
 }
 
 func NewLambdaTestProvider(username, accessKey string) *CloudProvider {

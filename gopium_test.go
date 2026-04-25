@@ -193,10 +193,12 @@ func TestNewNamedProviderSupportsKnownClouds(t *testing.T) {
 			creds: map[string]any{
 				"userName":  "alice",
 				"accessKey": "secret",
+				"region":    "eu-central-1",
 			},
-			wantName: "Sauce Labs",
-			wantURL:  "https://ondemand.us-west-1.saucelabs.com/wd/hub",
-			wantOpt:  "sauce:options",
+			wantName:       "Sauce Labs",
+			wantURL:        "https://ondemand.eu-central-1.saucelabs.com/wd/hub",
+			wantOpt:        "sauce:options",
+			wantClientOpts: 1,
 		},
 		{
 			name:     "lambdatest aliases",

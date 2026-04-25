@@ -26,7 +26,7 @@ func NewNamedProvider(name string, credentials map[string]any) (*CloudProvider, 
 		if err != nil {
 			return nil, fmt.Errorf("saucelabs: %w", err)
 		}
-		return NewSauceLabsProvider(username, accessKey), nil
+		return NewSauceLabsProviderForRegion(username, accessKey, optionalCredential(credentials, "region", "dc", "data_center", "datacenter")), nil
 	case "lambdatest", "lambda test", "lt", "lambdatestaccount":
 		username, err := requiredCredential(credentials, "username", "userName", "user")
 		if err != nil {
@@ -68,4 +68,16 @@ func requiredCredential(credentials map[string]any, keys ...string) (string, err
 		}
 	}
 	return "", fmt.Errorf("missing credential %s", strings.Join(keys, "/"))
+}
+
+func optionalCredential(credentials map[string]any, keys ...string) string {
+	for _, key := range keys {
+		if value, ok := credentials[key]; ok {
+			formatted := strings.TrimSpace(fmt.Sprint(value))
+			if formatted != "" {
+				return formatted
+			}
+		}
+	}
+	return ""
 }
