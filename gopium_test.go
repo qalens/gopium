@@ -166,6 +166,95 @@ func TestCloudProviderTransformsOptions(t *testing.T) {
 	}
 }
 
+func TestNewNamedProviderSupportsKnownClouds(t *testing.T) {
+	tests := []struct {
+		name           string
+		provider       string
+		creds          map[string]any
+		wantName       string
+		wantURL        string
+		wantOpt        string
+		wantClientOpts int
+	}{
+		{
+			name:     "browserstack aliases",
+			provider: "BSACCOUNT",
+			creds: map[string]any{
+				"username":   "alice",
+				"access_key": "secret",
+			},
+			wantName: "BrowserStack",
+			wantURL:  "https://hub-cloud.browserstack.com/wd/hub",
+			wantOpt:  "bstack:options",
+		},
+		{
+			name:     "saucelabs aliases",
+			provider: "sauce",
+			creds: map[string]any{
+				"userName":  "alice",
+				"accessKey": "secret",
+			},
+			wantName: "Sauce Labs",
+			wantURL:  "https://ondemand.us-west-1.saucelabs.com/wd/hub",
+			wantOpt:  "sauce:options",
+		},
+		{
+			name:     "lambdatest aliases",
+			provider: "lambda-test",
+			creds: map[string]any{
+				"username": "alice",
+				"key":      "secret",
+			},
+			wantName:       "LambdaTest",
+			wantURL:        "https://mobile-hub.lambdatest.com/wd/hub",
+			wantClientOpts: 1,
+		},
+		{
+			name:     "testingbot aliases",
+			provider: "testing_bot",
+			creds: map[string]any{
+				"key":    "alice",
+				"secret": "secret",
+			},
+			wantName: "TestingBot",
+			wantURL:  "https://hub.testingbot.com/wd/hub",
+			wantOpt:  "tb:options",
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			provider, err := NewNamedProvider(tc.provider, tc.creds)
+			if err != nil {
+				t.Fatalf("NewNamedProvider() error = %v", err)
+			}
+			if provider.Name() != tc.wantName {
+				t.Fatalf("provider name = %q, want %q", provider.Name(), tc.wantName)
+			}
+			if provider.ServerURL() != tc.wantURL {
+				t.Fatalf("provider url = %q, want %q", provider.ServerURL(), tc.wantURL)
+			}
+			if got := len(provider.ClientOptions()); got != tc.wantClientOpts {
+				t.Fatalf("client options len = %d, want %d", got, tc.wantClientOpts)
+			}
+
+			options := provider.Transform(NewBaseOptions().SetPlatformName("Android"))
+			caps := options.W3CCapabilities().AlwaysMatch
+			if tc.wantOpt != "" {
+				if _, ok := caps[tc.wantOpt]; !ok {
+					t.Fatalf("expected %s in capabilities", tc.wantOpt)
+				}
+			}
+		})
+	}
+}
+
+func TestNewNamedProviderRejectsUnknownProvider(t *testing.T) {
+	if _, err := NewNamedProvider("unknown-cloud", map[string]any{}); err == nil {
+		t.Fatal("expected error for unknown provider")
+	}
+}
+
 func TestWithBasicAuthAddsAuthorizationHeader(t *testing.T) {
 	client, err := NewClient("https://example.com", WithBasicAuth("alice", "secret"), WithHTTPClient(testsupport.RoundTripFunc(func(req *http.Request) (*http.Response, error) {
 		user, pass, ok := req.BasicAuth()
