@@ -37,6 +37,28 @@ func sauceLabsServerURL(region string) string {
 	}
 }
 
+func NewBitBarProvider(apiKey string) *CloudProvider {
+	return NewBitBarProviderForRegion(apiKey, "")
+}
+
+func NewBitBarProviderForRegion(apiKey, region string) *CloudProvider {
+	return NewCloudProvider("BitBar", bitBarServerURL(region), "bitbar:options").
+		SetVendorOptions(map[string]any{
+			"apiKey": apiKey,
+		})
+}
+
+func bitBarServerURL(region string) string {
+	switch normalizeProviderName(region) {
+	case "", "us", "uswest", "uswestmobile", "uswest1":
+		return "https://us-west-mobile-hub.bitbar.com/wd/hub"
+	case "eu", "euwest", "eumobile", "eucentral", "eucentral1":
+		return "https://eu-mobile-hub.bitbar.com/wd/hub"
+	default:
+		return "https://us-west-mobile-hub.bitbar.com/wd/hub"
+	}
+}
+
 func NewLambdaTestProvider(username, accessKey string) *CloudProvider {
 	return NewCloudProvider("LambdaTest", "https://mobile-hub.lambdatest.com/wd/hub", "LT:Options").
 		WithBasicAuth(username, accessKey).

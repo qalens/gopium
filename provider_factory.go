@@ -27,6 +27,12 @@ func NewNamedProvider(name string, credentials map[string]any) (*CloudProvider, 
 			return nil, fmt.Errorf("saucelabs: %w", err)
 		}
 		return NewSauceLabsProviderForRegion(username, accessKey, optionalCredential(credentials, "region", "dc", "data_center", "datacenter")), nil
+	case "bitbar", "smartbear", "smartbearbitbar", "bitbaraccount":
+		apiKey, err := requiredCredential(credentials, "api_key", "apiKey", "key", "access_key", "accessKey")
+		if err != nil {
+			return nil, fmt.Errorf("bitbar: %w", err)
+		}
+		return NewBitBarProviderForRegion(apiKey, optionalCredential(credentials, "region", "dc", "data_center", "datacenter", "hub")), nil
 	case "lambdatest", "lambda test", "lt", "lambdatestaccount":
 		username, err := requiredCredential(credentials, "username", "userName", "user")
 		if err != nil {

@@ -92,7 +92,7 @@ Driver-specific helpers:
 
 ## Device Farm Providers
 
-The package includes a provider abstraction so the same test setup can target local Appium, BrowserStack, Sauce Labs, TestingBot, or other clouds with minimal changes.
+The package includes a provider abstraction so the same test setup can target local Appium, BrowserStack, Sauce Labs, BitBar, TestingBot, or other clouds with minimal changes.
 
 ```go
 provider := gopium.NewBrowserStackProvider(
@@ -116,6 +116,7 @@ Built-in providers:
 
 - `NewBrowserStackProvider`
 - `NewSauceLabsProvider`
+- `NewBitBarProvider`
 - `NewLambdaTestProvider`
 - `NewTestingBotProvider`
 - `NewCloudProvider` for custom or internal grids
@@ -124,6 +125,7 @@ Provider capabilities follow the vendor’s own namespaced convention:
 
 - BrowserStack: `bstack:options`
 - Sauce Labs: `sauce:options`
+- BitBar: `bitbar:options`
 - TestingBot: `tb:options`
 - LambdaTest: `LT:Options`
 

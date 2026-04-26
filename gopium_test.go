@@ -257,6 +257,17 @@ func TestNewNamedProviderSupportsKnownClouds(t *testing.T) {
 			wantClientOpts: 1,
 		},
 		{
+			name:     "bitbar aliases",
+			provider: "smartbear",
+			creds: map[string]any{
+				"apiKey": "secret",
+				"region": "eu",
+			},
+			wantName: "BitBar",
+			wantURL:  "https://eu-mobile-hub.bitbar.com/wd/hub",
+			wantOpt:  "bitbar:options",
+		},
+		{
 			name:     "lambdatest aliases",
 			provider: "lambda-test",
 			creds: map[string]any{
