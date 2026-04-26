@@ -3,6 +3,7 @@ package gopium
 import (
 	"context"
 	"fmt"
+	"net"
 	"net/http"
 	"net/url"
 	"strings"
@@ -25,6 +26,19 @@ func NewClient(rawURL string, opts ...ClientOption) (*Client, error) {
 	client := &Client{
 		baseURL: parsed,
 		httpClient: &http.Client{
+			Transport: &http.Transport{
+				Proxy: http.ProxyFromEnvironment,
+				DialContext: (&net.Dialer{
+					Timeout:   60 * time.Second,
+					KeepAlive: 30 * time.Second,
+				}).DialContext,
+				ForceAttemptHTTP2:     true,
+				MaxIdleConns:          100,
+				IdleConnTimeout:       90 * time.Second,
+				TLSHandshakeTimeout:   60 * time.Second,
+				ExpectContinueTimeout: 1 * time.Second,
+				ResponseHeaderTimeout: 60 * time.Second,
+			},
 			Timeout: 60 * time.Second,
 		},
 		userAgent: "gopium/0.1",

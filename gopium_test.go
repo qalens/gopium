@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/qalens/gopium/internal/testsupport"
 )
@@ -273,9 +274,10 @@ func TestNewNamedProviderSupportsKnownClouds(t *testing.T) {
 				"key":    "alice",
 				"secret": "secret",
 			},
-			wantName: "TestingBot",
-			wantURL:  "https://hub.testingbot.com/wd/hub",
-			wantOpt:  "tb:options",
+			wantName:       "TestingBot",
+			wantURL:        "https://hub.testingbot.com/wd/hub",
+			wantOpt:        "tb:options",
+			wantClientOpts: 1,
 		},
 	}
 
@@ -326,6 +328,31 @@ func TestWithBasicAuthAddsAuthorizationHeader(t *testing.T) {
 
 	if _, err := client.Status(context.Background()); err != nil {
 		t.Fatalf("Status error: %v", err)
+	}
+}
+
+func TestWithHTTPTimeoutOverridesDefaultClientTimeout(t *testing.T) {
+	client, err := NewClient("https://example.com", WithHTTPTimeout(2*time.Minute))
+	if err != nil {
+		t.Fatalf("NewClient error: %v", err)
+	}
+
+	httpClient, ok := client.httpClient.(*http.Client)
+	if !ok {
+		t.Fatalf("expected *http.Client, got %T", client.httpClient)
+	}
+	if got := httpClient.Timeout; got != 2*time.Minute {
+		t.Fatalf("http timeout = %v, want %v", got, 2*time.Minute)
+	}
+	transport, ok := httpClient.Transport.(*http.Transport)
+	if !ok {
+		t.Fatalf("expected *http.Transport, got %T", httpClient.Transport)
+	}
+	if got := transport.TLSHandshakeTimeout; got != 2*time.Minute {
+		t.Fatalf("tls handshake timeout = %v, want %v", got, 2*time.Minute)
+	}
+	if got := transport.ResponseHeaderTimeout; got != 2*time.Minute {
+		t.Fatalf("response header timeout = %v, want %v", got, 2*time.Minute)
 	}
 }
 

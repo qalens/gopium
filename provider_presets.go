@@ -45,6 +45,7 @@ func NewLambdaTestProvider(username, accessKey string) *CloudProvider {
 
 func NewTestingBotProvider(key, secret string) *CloudProvider {
 	return NewCloudProvider("TestingBot", "https://hub.testingbot.com/wd/hub", "tb:options").
+		WithBasicAuth(key, secret).
 		SetVendorOptions(map[string]any{
 			"key":    key,
 			"secret": secret,

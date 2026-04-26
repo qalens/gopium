@@ -42,7 +42,7 @@ func NewNamedProvider(name string, credentials map[string]any) (*CloudProvider, 
 		if err != nil {
 			return nil, fmt.Errorf("testingbot: %w", err)
 		}
-		secret, err := requiredCredential(credentials, "secret", "access_key", "accessKey")
+		secret, err := requiredCredential(credentials, "secret", "access_secret", "secretKey", "secret_key")
 		if err != nil {
 			return nil, fmt.Errorf("testingbot: %w", err)
 		}
