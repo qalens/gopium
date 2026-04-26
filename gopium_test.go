@@ -1,10 +1,12 @@
 package gopium
 
 import (
+	"bytes"
 	"context"
 	"encoding/base64"
 	"encoding/json"
 	"io"
+	"log"
 	"net/http"
 	"strings"
 	"testing"
@@ -12,7 +14,7 @@ import (
 	"github.com/qalens/gopium/internal/testsupport"
 )
 
-func TestNewSessionRequestIncludesW3CAndLegacyPayloads(t *testing.T) {
+func TestNewSessionRequestIncludesW3CPayloadOnlyByDefault(t *testing.T) {
 	options := NewUiAutomator2Options().
 		SetDeviceName("Pixel 9").
 		SetUDID("emulator-5554").
@@ -26,8 +28,8 @@ func TestNewSessionRequestIncludesW3CAndLegacyPayloads(t *testing.T) {
 	if got := req.Capabilities.AlwaysMatch["appium:automationName"]; got != "UiAutomator2" {
 		t.Fatalf("automationName = %v", got)
 	}
-	if got := req.DesiredCapabilities["automationName"]; got != "UiAutomator2" {
-		t.Fatalf("legacy automationName = %v", got)
+	if req.DesiredCapabilities != nil {
+		t.Fatalf("did not expect desiredCapabilities by default: %#v", req.DesiredCapabilities)
 	}
 	if len(req.Capabilities.FirstMatch) != 1 {
 		t.Fatalf("firstMatch len = %d", len(req.Capabilities.FirstMatch))
@@ -108,6 +110,30 @@ func TestDriverStartSessionSupportsLegacyResponse(t *testing.T) {
 	}
 }
 
+func TestClientLoggerLogsRequestAndResponse(t *testing.T) {
+	var out bytes.Buffer
+	logger := log.New(&out, "", 0)
+
+	client, err := NewClient("http://127.0.0.1:4723", WithLogger(logger), WithHTTPClient(testsupport.RoundTripFunc(func(req *http.Request) (*http.Response, error) {
+		return testsupport.JSONResponse(http.StatusOK, `{"value":{"sessionId":"w3c-session","capabilities":{"platformName":"Android"}}}`), nil
+	})))
+	if err != nil {
+		t.Fatalf("NewClient error: %v", err)
+	}
+
+	if _, err := client.NewDriver(context.Background(), NewBaseOptions().SetPlatformName("Android")); err != nil {
+		t.Fatalf("NewDriver error: %v", err)
+	}
+
+	logged := out.String()
+	if !strings.Contains(logged, "[gopium] POST http://127.0.0.1:4723/session") {
+		t.Fatalf("expected request log, got %q", logged)
+	}
+	if !strings.Contains(logged, `"sessionId":"w3c-session"`) {
+		t.Fatalf("expected response body in log, got %q", logged)
+	}
+}
+
 func TestResponseEnvelopeDecodesBothElementFormats(t *testing.T) {
 	cases := []string{
 		`{"value":{"element-6066-11e4-a52e-4f735466cecf":"w3c"}}`,
@@ -163,6 +189,35 @@ func TestCloudProviderTransformsOptions(t *testing.T) {
 	}
 	if got := w3c.AlwaysMatch["browserstack:appiumOptions"]; got == nil {
 		t.Fatal("expected browserstack:appiumOptions")
+	}
+}
+
+func TestSauceProviderAddsAppiumVersionAndMergesExistingSauceOptions(t *testing.T) {
+	provider := NewSauceLabsProvider("user", "key")
+
+	options := provider.Transform(NewXCUITestOptions().
+		SetDeviceName("iPhone 15").
+		SetPlatformVersion("17.5").
+		SetCapability("sauce:options", map[string]any{
+			"name": "ios-signup",
+		}))
+
+	w3c := options.W3CCapabilities()
+	sauce, ok := w3c.AlwaysMatch["sauce:options"].(map[string]any)
+	if !ok {
+		t.Fatal("expected sauce:options")
+	}
+	if got := sauce["appiumVersion"]; got != "latest" {
+		t.Fatalf("appiumVersion = %v", got)
+	}
+	if got := sauce["username"]; got != "user" {
+		t.Fatalf("username = %v", got)
+	}
+	if got := sauce["accessKey"]; got != "key" {
+		t.Fatalf("accessKey = %v", got)
+	}
+	if got := sauce["name"]; got != "ios-signup" {
+		t.Fatalf("name = %v", got)
 	}
 }
 

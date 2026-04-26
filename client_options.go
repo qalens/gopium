@@ -34,3 +34,9 @@ func WithBasicAuth(username, password string) ClientOption {
 		req.SetBasicAuth(username, password)
 	})
 }
+
+func WithLogger(logger Logger) ClientOption {
+	return func(c *Client) {
+		c.logger = logger
+	}
+}

@@ -17,8 +17,9 @@ func NewSauceLabsProviderForRegion(username, accessKey, region string) *CloudPro
 	return NewCloudProvider("Sauce Labs", sauceLabsServerURL(region), "sauce:options").
 		WithBasicAuth(username, accessKey).
 		SetVendorOptions(map[string]any{
-			"username":  username,
-			"accessKey": accessKey,
+			"username":      username,
+			"accessKey":     accessKey,
+			"appiumVersion": "latest",
 		}).
 		SetCloudAppiumOptionsName("sauce")
 }

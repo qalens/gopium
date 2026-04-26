@@ -36,7 +36,14 @@ func (o *BaseOptions) SetVendorOptions(name string, values map[string]any) *Base
 	if !strings.Contains(name, ":") {
 		name += ":options"
 	}
-	o.alwaysMatch[name] = cloneMap(values)
+	merged := map[string]any{}
+	if existing, ok := o.alwaysMatch[name].(map[string]any); ok {
+		merged = cloneMap(existing)
+	}
+	for key, value := range values {
+		merged[key] = value
+	}
+	o.alwaysMatch[name] = merged
 	return o
 }
 
@@ -45,7 +52,15 @@ func (o *BaseOptions) SetCloudAppiumOptions(cloud string, values map[string]any)
 	if cloud == "" {
 		return o
 	}
-	o.alwaysMatch[cloud+":appiumOptions"] = cloneMap(values)
+	name := cloud + ":appiumOptions"
+	merged := map[string]any{}
+	if existing, ok := o.alwaysMatch[name].(map[string]any); ok {
+		merged = cloneMap(existing)
+	}
+	for key, value := range values {
+		merged[key] = value
+	}
+	o.alwaysMatch[name] = merged
 	return o
 }
 
@@ -95,4 +110,8 @@ func (o *BaseOptions) LegacyCapabilities() map[string]any {
 		legacy[key] = value
 	}
 	return legacy
+}
+
+func (o *BaseOptions) IncludeLegacyCapabilities() bool {
+	return false
 }

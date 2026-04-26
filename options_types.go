@@ -3,6 +3,7 @@ package gopium
 type SessionOptions interface {
 	W3CCapabilities() W3CCapabilities
 	LegacyCapabilities() map[string]any
+	IncludeLegacyCapabilities() bool
 }
 
 type W3CCapabilities struct {

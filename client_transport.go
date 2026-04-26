@@ -11,11 +11,13 @@ import (
 
 func (c *Client) do(ctx context.Context, method, path string, body any) (*responseEnvelope, error) {
 	var payload io.Reader
+	var payloadBytes []byte
 	if body != nil {
 		buf := &bytes.Buffer{}
 		if err := json.NewEncoder(buf).Encode(body); err != nil {
 			return nil, fmt.Errorf("encode request body: %w", err)
 		}
+		payloadBytes = append(payloadBytes, buf.Bytes()...)
 		payload = buf
 	}
 
@@ -40,6 +42,15 @@ func (c *Client) do(ctx context.Context, method, path string, body any) (*respon
 	data, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return nil, fmt.Errorf("read response body: %w", err)
+	}
+	if c.logger != nil {
+		c.logger.Printf("[gopium] %s %s request=%s response_status=%d response=%s",
+			method,
+			req.URL.String(),
+			string(payloadBytes),
+			resp.StatusCode,
+			string(data),
+		)
 	}
 
 	return decodeResponse(resp.StatusCode, data)

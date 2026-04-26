@@ -6,10 +6,13 @@ func newSessionRequest(options SessionOptions) newSessionPayload {
 		w3c.FirstMatch = []map[string]any{{}}
 	}
 
-	return newSessionPayload{
-		Capabilities:        w3c,
-		DesiredCapabilities: options.LegacyCapabilities(),
+	req := newSessionPayload{
+		Capabilities: w3c,
 	}
+	if options.IncludeLegacyCapabilities() {
+		req.DesiredCapabilities = options.LegacyCapabilities()
+	}
+	return req
 }
 
 func NormalizeOptions(options SessionOptions) *BaseOptions {
