@@ -135,7 +135,7 @@ func TestClientLoggerLogsRequestAndResponse(t *testing.T) {
 	}
 }
 
-func TestHideKeyboardOmitsBodyWhenNoArgumentsProvided(t *testing.T) {
+func TestHideKeyboardUsesIOSDefaultsWhenNoArgumentsProvided(t *testing.T) {
 	client, err := NewClient("http://127.0.0.1:4723", WithHTTPClient(testsupport.RoundTripFunc(func(req *http.Request) (*http.Response, error) {
 		if req.URL.Path != "/session/test-session/appium/device/hide_keyboard" {
 			t.Fatalf("unexpected path %s", req.URL.Path)
@@ -149,9 +149,12 @@ func TestHideKeyboardOmitsBodyWhenNoArgumentsProvided(t *testing.T) {
 			if err != nil {
 				t.Fatalf("read body: %v", err)
 			}
-			if len(body) != 0 {
-				t.Fatalf("expected empty body, got %q", string(body))
+			if strings.TrimSpace(string(body)) != `{"keyName":"Done","strategy":"pressKey"}` &&
+				strings.TrimSpace(string(body)) != `{"strategy":"pressKey","keyName":"Done"}` {
+				t.Fatalf("expected iOS default payload, got %q", string(body))
 			}
+		} else {
+			t.Fatal("expected request body")
 		}
 
 		return testsupport.JSONResponse(http.StatusOK, `{"value":null}`), nil
@@ -164,6 +167,65 @@ func TestHideKeyboardOmitsBodyWhenNoArgumentsProvided(t *testing.T) {
 		client:    client,
 		sessionID: "test-session",
 		dialect:   DialectW3C,
+		capabilities: map[string]any{
+			"platformName": "iOS",
+		},
+	}
+
+	if err := driver.HideKeyboard(context.Background(), "", "", 0, ""); err != nil {
+		t.Fatalf("HideKeyboard error: %v", err)
+	}
+}
+
+func TestHideKeyboardUsesAndroidDefaultsWhenNoArgumentsProvided(t *testing.T) {
+	client, err := NewClient("http://127.0.0.1:4723", WithHTTPClient(testsupport.RoundTripFunc(func(req *http.Request) (*http.Response, error) {
+		body, err := io.ReadAll(req.Body)
+		if err != nil {
+			t.Fatalf("read body: %v", err)
+		}
+		if strings.TrimSpace(string(body)) != `{"strategy":"tapOutside"}` {
+			t.Fatalf("expected Android default payload, got %q", string(body))
+		}
+		return testsupport.JSONResponse(http.StatusOK, `{"value":null}`), nil
+	})))
+	if err != nil {
+		t.Fatalf("NewClient error: %v", err)
+	}
+
+	driver := &Driver{
+		client:    client,
+		sessionID: "test-session",
+		dialect:   DialectW3C,
+		capabilities: map[string]any{
+			"platformName": "Android",
+		},
+	}
+
+	if err := driver.HideKeyboard(context.Background(), "", "", 0, ""); err != nil {
+		t.Fatalf("HideKeyboard error: %v", err)
+	}
+}
+
+func TestHideKeyboardKeepsEmptyPayloadForUnknownPlatformWhenNoArgumentsProvided(t *testing.T) {
+	client, err := NewClient("http://127.0.0.1:4723", WithHTTPClient(testsupport.RoundTripFunc(func(req *http.Request) (*http.Response, error) {
+		body, err := io.ReadAll(req.Body)
+		if err != nil {
+			t.Fatalf("read body: %v", err)
+		}
+		if strings.TrimSpace(string(body)) != "{}" {
+			t.Fatalf("expected empty JSON object, got %q", string(body))
+		}
+		return testsupport.JSONResponse(http.StatusOK, `{"value":null}`), nil
+	})))
+	if err != nil {
+		t.Fatalf("NewClient error: %v", err)
+	}
+
+	driver := &Driver{
+		client:       client,
+		sessionID:    "test-session",
+		dialect:      DialectW3C,
+		capabilities: map[string]any{"platformName": "mac"},
 	}
 
 	if err := driver.HideKeyboard(context.Background(), "", "", 0, ""); err != nil {

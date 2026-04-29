@@ -4,6 +4,13 @@ import (
 	"context"
 	"encoding/base64"
 	"net/http"
+	"strings"
+)
+
+const (
+	hideKeyboardStrategyPressKey  = "pressKey"
+	hideKeyboardStrategyTapOutside = "tapOutside"
+	hideKeyboardKeyNameDone       = "Done"
 )
 
 func (d *Driver) GetDeviceTime(ctx context.Context, format string) (string, error) {
@@ -71,39 +78,44 @@ func (d *Driver) PushFileBytes(ctx context.Context, path string, data []byte) er
 }
 
 func (d *Driver) HideKeyboard(ctx context.Context, strategy, key string, keyCode int, keyName string) error {
-	var options map[string]any
-	if strategy != "" {
-		if options == nil {
-			options = map[string]any{}
+	options := map[string]any{}
+	if strategy == "" && key == "" && keyCode == 0 && keyName == "" {
+		switch strings.ToLower(d.platformName()) {
+		case "ios":
+			options["strategy"] = hideKeyboardStrategyPressKey
+			options["keyName"] = hideKeyboardKeyNameDone
+		case "android":
+			options["strategy"] = hideKeyboardStrategyTapOutside
 		}
+	}
+	if strategy != "" {
 		options["strategy"] = strategy
 	}
 	if key != "" {
-		if options == nil {
-			options = map[string]any{}
-		}
 		options["key"] = key
 	}
 	if keyCode != 0 {
-		if options == nil {
-			options = map[string]any{}
-		}
 		options["keyCode"] = keyCode
 	}
 	if keyName != "" {
-		if options == nil {
-			options = map[string]any{}
-		}
 		options["keyName"] = keyName
 	}
 
-	var payload any
-	if options != nil {
-		payload = options
-	}
-
-	_, err := d.client.do(ctx, http.MethodPost, d.sessionPath("/appium/device/hide_keyboard"), payload)
+	_, err := d.client.do(ctx, http.MethodPost, d.sessionPath("/appium/device/hide_keyboard"), options)
 	return err
+}
+
+func (d *Driver) platformName() string {
+	if d == nil || d.capabilities == nil {
+		return ""
+	}
+	if value, ok := d.capabilities["platformName"].(string); ok {
+		return value
+	}
+	if value, ok := d.capabilities["appium:platformName"].(string); ok {
+		return value
+	}
+	return ""
 }
 
 func (d *Driver) IsKeyboardShown(ctx context.Context) (bool, error) {
