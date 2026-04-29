@@ -135,6 +135,42 @@ func TestClientLoggerLogsRequestAndResponse(t *testing.T) {
 	}
 }
 
+func TestHideKeyboardOmitsBodyWhenNoArgumentsProvided(t *testing.T) {
+	client, err := NewClient("http://127.0.0.1:4723", WithHTTPClient(testsupport.RoundTripFunc(func(req *http.Request) (*http.Response, error) {
+		if req.URL.Path != "/session/test-session/appium/device/hide_keyboard" {
+			t.Fatalf("unexpected path %s", req.URL.Path)
+		}
+		if req.Method != http.MethodPost {
+			t.Fatalf("unexpected method %s", req.Method)
+		}
+
+		if req.Body != nil {
+			body, err := io.ReadAll(req.Body)
+			if err != nil {
+				t.Fatalf("read body: %v", err)
+			}
+			if len(body) != 0 {
+				t.Fatalf("expected empty body, got %q", string(body))
+			}
+		}
+
+		return testsupport.JSONResponse(http.StatusOK, `{"value":null}`), nil
+	})))
+	if err != nil {
+		t.Fatalf("NewClient error: %v", err)
+	}
+
+	driver := &Driver{
+		client:    client,
+		sessionID: "test-session",
+		dialect:   DialectW3C,
+	}
+
+	if err := driver.HideKeyboard(context.Background(), "", "", 0, ""); err != nil {
+		t.Fatalf("HideKeyboard error: %v", err)
+	}
+}
+
 func TestResponseEnvelopeDecodesBothElementFormats(t *testing.T) {
 	cases := []string{
 		`{"value":{"element-6066-11e4-a52e-4f735466cecf":"w3c"}}`,

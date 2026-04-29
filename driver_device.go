@@ -71,19 +71,37 @@ func (d *Driver) PushFileBytes(ctx context.Context, path string, data []byte) er
 }
 
 func (d *Driver) HideKeyboard(ctx context.Context, strategy, key string, keyCode int, keyName string) error {
-	payload := map[string]any{}
+	var options map[string]any
 	if strategy != "" {
-		payload["strategy"] = strategy
+		if options == nil {
+			options = map[string]any{}
+		}
+		options["strategy"] = strategy
 	}
 	if key != "" {
-		payload["key"] = key
+		if options == nil {
+			options = map[string]any{}
+		}
+		options["key"] = key
 	}
 	if keyCode != 0 {
-		payload["keyCode"] = keyCode
+		if options == nil {
+			options = map[string]any{}
+		}
+		options["keyCode"] = keyCode
 	}
 	if keyName != "" {
-		payload["keyName"] = keyName
+		if options == nil {
+			options = map[string]any{}
+		}
+		options["keyName"] = keyName
 	}
+
+	var payload any
+	if options != nil {
+		payload = options
+	}
+
 	_, err := d.client.do(ctx, http.MethodPost, d.sessionPath("/appium/device/hide_keyboard"), payload)
 	return err
 }
